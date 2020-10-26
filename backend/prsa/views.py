@@ -48,7 +48,7 @@ def train_model():
   df['Label'] = df['Label'].replace(to_replace ="N", value = -1) 
   df['Label'] = df['Label'].replace(to_replace ="P", value = 1) 
   text_clf = Pipeline([('vect', CountVectorizer()),
-                     ('tfidf', TfidfTransformer()),
+                     ('tfidf', TfidfTransformer()),      
                      ('clf', MultinomialNB())])
   tuned_parameters = {
       'vect__ngram_range': [(1, 1), (1, 2), (2, 2)],
@@ -87,6 +87,11 @@ def categoryDF():
   product_category['ProductID'] = product_category['ProductID'].astype(int)
   product_category = product_category.sort_values(by=['ProductID'], ascending=True).reset_index(drop=True)
   return product_category
+
+
+@api_view(['GET'])
+def checkAPI(request):
+  return Response("hello")
 
 @api_view(['GET'])
 def aspectBasedMining(request):
@@ -142,7 +147,6 @@ def aspectClassification(request):
   test_set['Sentiment'] = test_set.apply(lambda row: get_sentiment(row), axis=1)
   test_set = test_set[['ProductID', 'Aspect', 'Sentiment']]
   test_set = test_set.groupby(['Aspect', 'ProductID', 'Sentiment']).size().reset_index(name='Count')
-  print(test_set)
   # test_set = test_set.groupby(['Aspect', 'ProductID']).size().reset_index(name='Count')
   # table = pd.pivot_table(test_set, values=['Count'], index=['ProductID', 'Aspect'], aggfunc=np.sum, fill_value=0)
   # table_index = table.index
@@ -246,17 +250,15 @@ def mostLikedProducts(request):
 @api_view(['POST'])
 def getYearlyPerformance(request):
   data = request.data
-  print(data)
   year = data['year']
-  print(year)
   sql = "SELECT review_id as ReviewID, YEAR(created_at) as ReviewYear FROM review ORDER BY created_at"
   review_date = pd.read_sql(sql, conn)
   result = overall_classification()
   temp = result.copy()
   temp = pd.merge(temp, review_date, on='ReviewID', how='left')
-  temp = temp[['ProductID', 'Sentiment', 'ReviewYear']]
-  temp = temp.groupby(['ProductID', 'ReviewYear', 'Sentiment']).size().reset_index(name="Count")
-  table = pd.pivot_table(temp, values='Count', index=['ReviewYear', 'ProductID'], columns=['Sentiment'], aggfunc=np.sum, fill_value=0)
+  temp = temp[['ProductID', 'Product', 'Sentiment', 'ReviewYear']]
+  temp = temp.groupby(['ProductID', 'Product', 'ReviewYear', 'Sentiment']).size().reset_index(name="Count")
+  table = pd.pivot_table(temp, values='Count', index=['ReviewYear', 'Product'], columns=['Sentiment'], aggfunc=np.sum, fill_value=0)
   p_list = table.index
   pos = []
   neg = []

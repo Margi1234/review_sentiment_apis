@@ -16,6 +16,7 @@ from prsa import views as PrsaApi
 # ]
 
 urlpatterns = [
+    path("hello", PrsaApi.checkAPI),
     path("create_classifier", PrsaApi.createClassifier),
     path("aspect_based_mining_classifier", PrsaApi.aspectBasedMining),
     path("get_word_cloud", PrsaApi.getWordCloud),
